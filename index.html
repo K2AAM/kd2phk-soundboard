@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KD2PHK Drunken Raccoon Soundboard</title>
+    <title>KD2PHK Soundboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -124,7 +124,8 @@
         <input type="text" id="search" placeholder="Search audio files..." aria-label="Search audio files">
     </div>
     <div class="audio-grid" id="audio-list"></div>
-    <footer>Powered by drunken raccoon chaos 🦝🍺</footer>
+    <footer>Powered by 🦝 & 🍺</footer>
+
     <script>
         const audioFiles = [
             "Ah_Roger.mp3",
@@ -176,8 +177,10 @@
             "Y'out'there.mp3",
             "Yut.mp3"
         ];
+
         const audioList = document.getElementById('audio-list');
         const searchInput = document.getElementById('search');
+
         function renderAudioList(files) {
             audioList.innerHTML = '';
             files.forEach(file => {
@@ -192,7 +195,9 @@
                 audioList.appendChild(div);
             });
         }
+
         renderAudioList(audioFiles);
+
         searchInput.addEventListener('input', () => {
             const query = searchInput.value.toLowerCase();
             const filteredFiles = audioFiles.filter(file => file.toLowerCase().includes(query));
