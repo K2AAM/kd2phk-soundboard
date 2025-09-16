@@ -26,7 +26,7 @@ cat > index.html << EOF
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KD2PHK Drunken Raccoon Soundboard</title>
+    <title>KD2PHK Soundboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -142,12 +142,12 @@ cat > index.html << EOF
 </head>
 <body>
     <img src="https://img.icons8.com/emoji/96/000000/raccoon.png" alt="Drunken Raccoon Logo" class="header-img">
-    <h1>KD2PHK Drunken Raccoon Soundboard</h1>
+    <h1>KD2PHK Soundboard</h1>
     <div class="search-bar">
         <input type="text" id="search" placeholder="Search audio files..." aria-label="Search audio files">
     </div>
     <div class="audio-grid" id="audio-list"></div>
-    <footer>Powered by drunken raccoon chaos 🦝🍺</footer>
+    <footer>Powered by 🦝 & 🍺</footer>
     <script>
         const audioFiles = [
 EOF

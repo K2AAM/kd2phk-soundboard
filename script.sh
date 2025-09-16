@@ -1,3 +1,34 @@
+#!/bin/bash
+# Paths (relative to the script's location)
+REPO_DIR="$(pwd)" # Current directory (kd2phk-soundboard)
+SOURCE_AUDIO_DIR="/home/patriot3g/soundboard-repo/audio"
+AUDIO_DIR="$REPO_DIR/audio"
+
+# Check if directories exist
+if [ ! -d "$SOURCE_AUDIO_DIR" ]; then
+    echo "Error: Source audio directory $SOURCE_AUDIO_DIR does not exist."
+    exit 1
+fi
+if [ ! -d "$AUDIO_DIR" ]; then
+    echo "Creating audio directory $AUDIO_DIR..."
+    mkdir -p "$AUDIO_DIR"
+fi
+
+# Check and fix repository permissions
+echo "Checking repository permissions..."
+if [ ! -w "$REPO_DIR/.git/objects" ]; then
+    echo "Fixing permissions for $REPO_DIR and $SOURCE_AUDIO_DIR..."
+    sudo chown -R patriot3g:patriot3g "$REPO_DIR" "$SOURCE_AUDIO_DIR"
+    chmod -R u+rwX "$REPO_DIR" "$SOURCE_AUDIO_DIR"
+fi
+
+# Copy new .mp3 files from source to repo's audio directory
+echo "Copying .mp3 files from $SOURCE_AUDIO_DIR to $AUDIO_DIR..."
+rsync -av --include="*.mp3" --exclude="*" "$SOURCE_AUDIO_DIR/" "$AUDIO_DIR/"
+
+# Generate index.html
+echo "Generating index.html..."
+cat > index.html << EOF
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -127,56 +158,28 @@
     <footer>Powered by 🦝 & 🍺</footer>
     <script>
         const audioFiles = [
-            "Ah_Roger.mp3",
-            "And_my_mother_was_quite_sick_of_it.mp3",
-            "And_Uhh..._Uhh.mp3",
-            "And_Uh.mp3",
-            "Anyway.mp3",
-            "Breface.mp3",
-            "But_anyway.mp3",
-            "But-uhh.mp3",
-            "eeuuuuh.mp3",
-            "Everything_went_to_my_belly.mp3",
-            "Ha_ha_ha_yup.mp3",
-            "I_havent_really_fly_fished.mp3",
-            "I'm a good housewife Steve.mp3",
-            "Im_all_for_that.mp3",
-            "Ive_been_living_alone_for_a_little_while_here.mp3",
-            "Ive_come_back_down_since_then.mp3",
-            "I_wanted_to_find_a_new_woman.mp3",
-            "I_was_on_medicine.mp3",
-            "Oh_dont_tell_me_youre_eatin_nother_cone.mp3",
-            "Oh_man.mp3",
-            "Oh_my_goodness.mp3",
-            "Oh_Roger_2.mp3",
-            "Oh_Roger.mp3",
-            "Oh_Roger_Yep.mp3",
-            "Out_of_storts.mp3",
-            "Raccoons_1.mp3",
-            "Raccoons_2.mp3",
-            "Roger.mp3",
-            "rubbingit.mp3",
-            "So.mp3",
-            "Uhhhhhhh.mp3",
-            "Uhhh.mp3",
-            "Uhh_Yeah.mp3",
-            "Uh_whats_your_callsign_again.mp3",
-            "Ummm.mp3",
-            "Ummm_Ummm.mp3",
-            "Um_my_mother_was_not_impressed.mp3",
-            "Underwear_1.mp3",
-            "Uuuhhhhhhhhhhh.mp3",
-            "UUUMMMMM.mp3",
-            "Well_heres_the_thing.mp3",
-            "Yeah_I_dont_know_you_looked_pretty_darn_good_last_time_I_saw_ya.mp3",
-            "YeahRoger_1.mp3",
-            "Yeah_Roger_2.mp3",
-            "Yeah_this_is_KD2PHK_youre_cominin.mp3",
-            "Yep I blast her out regularly.mp3",
-            "Yes_Roger.mp3",
-            "Yes_Roger_Uhhhh.mp3",
-            "Y'out'there.mp3",
-            "Yut.mp3"
+EOF
+
+# Add audio files to JavaScript array with proper indentation
+files_found=0
+for file in "$AUDIO_DIR"/*.mp3; do
+    if [ -f "$file" ]; then
+        filename=$(basename "$file")
+        echo "            \"$filename\"," >> index.html
+        files_found=1
+    fi
+done
+
+# Remove the last comma if files were found
+if [ $files_found -eq 1 ]; then
+    sed -i '$ s/,$//' index.html
+else
+    echo "Warning: No .mp3 files found in $AUDIO_DIR."
+    exit 1
+fi
+
+# Close the JavaScript and HTML
+cat >> index.html << EOF
         ];
         const audioList = document.getElementById('audio-list');
         const searchInput = document.getElementById('search');
@@ -184,13 +187,13 @@
             audioList.innerHTML = '';
             files.forEach(file => {
                 const div = document.createElement('div');
-                div.className = `audio-card ${file.includes('Raccoons') ? 'raccoon' : ''}`;
+                div.className = \`audio-card \${file.includes('Raccoons') ? 'raccoon' : ''}\`;
                 const fileName = file.replace(/\.mp3$/, '').replace(/_/g, ' ');
-                div.innerHTML = `
-                    <span>${fileName}</span>
-                    <button onclick="new Audio('audio/${file}').play()" aria-label="Play ${fileName}">Play</button>
-                    <a href="audio/${file}" target="_blank" aria-label="Download ${fileName}">Download</a>
-                `;
+                div.innerHTML = \`
+                    <span>\${fileName}</span>
+                    <button onclick="new Audio('audio/\${file}').play()" aria-label="Play \${fileName}">Play</button>
+                    <a href="audio/\${file}" target="_blank" aria-label="Download \${fileName}">Download</a>
+                \`;
                 audioList.appendChild(div);
             });
         }
@@ -203,3 +206,42 @@
     </script>
 </body>
 </html>
+EOF
+
+# Verify generated index.html
+echo "Verifying index.html contents..."
+if grep -q "Breface.mp3" index.html && grep -q "rubbingit.mp3" index.html && grep -q "Yep I blast her out regularly.mp3" index.html; then
+    echo "New files (Breface.mp3, rubbingit.mp3, Yep I blast her out regularly.mp3) found in index.html"
+else
+    echo "Error: One or more new files not found in index.html"
+    exit 1
+fi
+
+# Check for changes and stage
+echo "Staging changes..."
+if ! git add .; then
+    echo "Error: Failed to stage changes. Check permissions on .git directory."
+    exit 1
+fi
+
+# Check git status
+echo "Git status:"
+git status
+
+# Commit changes
+if ! git diff-index --quiet HEAD; then
+    echo "Committing changes..."
+    if ! git commit -m "Add new audio files (rubbingit.mp3, Yep I blast her out regularly.mp3) - $(date '+%Y-%m-%d %H:%M:%S')"; then
+        echo "Error: Failed to commit changes."
+        exit 1
+    fi
+    # Push to GitHub
+    echo "Pushing to GitHub..."
+    if ! git push origin main; then
+        echo "Error: Failed to push to GitHub. Check authentication settings."
+        exit 1
+    fi
+    echo "Soundboard updated and pushed to GitHub!"
+else
+    echo "No new changes to commit."
+fi
